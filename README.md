@@ -8,7 +8,7 @@ This installs a Control Center for Ad-Blocking
 and logging of DNS Queries.
 
 See the SmallNetBuilders Forum thread for more details:
-<a href="http://www.snbforums.com/threads/ab-solution-1-05-is-out.31291/">AB-Solution 1.05 is out!</a>
+<a href="http://www.snbforums.com/threads/ab-solution-1-06-is-out.31309/">AB-Solution 1.06</a>
 
 Screenshot of v1.06:
 
