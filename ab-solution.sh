@@ -2,9 +2,9 @@
 
 # Script name and version number
 appName="AB-Solution"
-appVersion="1.05"
+appVersion="1.06"
 appScript="ab-solution.sh"
-releaseDate="20160325"
+releaseDate="20160326"
 
 # script info
 script_info(){
@@ -138,7 +138,7 @@ fi
 if [ $needsReboot == "1" ] ;then
 	echo -e " \n Changes were made that require to reboot the router."
 	echo -e " These are necessary for adBlocking to work afterwards.\n"
-	echo -en " Would you like to reboot now?\n [1=Yes 2=Exit] " ;read RebootNow
+	echo -en " Would you like to reboot now? [1=Yes 2=Exit] " ;read RebootNow
 	if [ $RebootNow == "1" ];then
 		echo " Rebooting router..."
 		reboot
@@ -160,13 +160,13 @@ hostsFileUpdateDay=`date +\%A`	# Tuesday, used for UI
 # for updates only
 if [ $prevInstall == "1" ] ;then
 
-	echo -e " Found a previous installation to update on:\n\n$igreen --> $adBlockingDevice$colorNone\n"
-	echo -en " Please confirm to update: [1=Yes 2=Exit] " ;read ConfirmDevice
+	echo -e " Found a previous installation to upgrade on:\n\n$igreen --> $adBlockingDevice$colorNone\n"
+	echo -en " Please confirm to upgrade: [1=Yes 2=Exit] " ;read ConfirmDevice
 	echo " Input: $ConfirmDevice"
 
 	if [ $ConfirmDevice == "1" ];then
 		echo ""
-		echo -e " Using $adBlockingDevice to update $appName\n"
+		echo -e " Using $adBlockingDevice to upgrade $appName\n"
 		updating=1
 
 	else
@@ -560,7 +560,7 @@ elif [ $SelectHostsFileType == "3" ];then
 
 	hostsFileType=shooter40sw
 
-# large hosts
+# shooter40sw's hosts
 cat >> $installDirPath/$scriptsDir/$updateHostsFile << EOF
 # get hosts files and combine
 wget -qO- \\
@@ -837,7 +837,7 @@ elif [ $adBlockingState == "on" ];then
 	echo " restarting Dnsmasq to apply changes"
 	service restart_dnsmasq
 	echo -e " Dnsmasq restarted\n"
-elif [ $adBlockingState == off ];then
+elif [ $adBlockingState == "off" ];then
 	echo " Adblocking Is disabled. Enable it first."
 fi
 }
@@ -1249,9 +1249,85 @@ fi
 # copy appScript to adblocking device
 cp_app_script(){
 
+appScriptPath=$(dirname "$(readlink -f "$0")")
+echo " Copying $appScript to $adBlockingDevice"
 if [ $adBlockingDevice != $appScriptPath ];then
-	cp $appScriptPath/$appScript $adBlockingDevice/$appScript
-	echo " Install script copied to $adBlockingDevice"
+	cp -f $appScriptPath/$appScript $adBlockingDevice/$appScript
+	echo -e " $appScript copied to $adBlockingDevice\n"
+else
+	echo -e " $appScript is already on $adBlockingDevice\n"
+fi
+}
+
+# Sorry to see you go! (uninstall app)
+rm_ab_solution(){
+if [ $prevSettings == "1" ] || [ $news == "0" ];then
+
+	echo -e "$ired You are about to uninstall $appName. $colorNone\n"
+	echo -en " Are you sure you want to do that? [1=Yes 2=Exit] " ;read UninstallNow
+	if [ $UninstallNow == "1" ];then
+		insert_dashed_line
+		echo -e "\n Sorry to see you go...\n"
+
+		# move post-mount
+		if [ -f $jScripts/post-mount ];then
+		mv $jScripts/post-mount $adBlockingDevice/post-mount_$todayHour
+		echo -e " moved $jScripts/post-mount to $adBlockingDevice/post-mount_$todayHour\n"
+		fi
+		
+		# move dnsmasq.postconf
+		if [ -f $jScripts/dnsmasq.postconf ];then
+		mv $jScripts/dnsmasq.postconf $adBlockingDevice/dnsmasq.postconf_$todayHour
+		echo -e " moved $jScripts/dnsmasq.postconf to $adBlockingDevice/dnsmasq.postconf_$todayHour\n"
+		fi
+		
+		# remove cron job
+		cru d UpdateHosts
+		echo -e " Cron job to update hosts is removed.\n"
+		
+		# restarting dnsmasq
+		service restart_dnsmasq
+		loggingState=off
+		adBlockingState=off
+		write_config_file
+		
+		echo -e " Dnsmasq restarted, $appName is removed from system."
+		insert_dashed_line
+		
+		# remove adblocking dir
+		echo -e "\n Do you want to remove all $appName files on $adBlockingDevice?"
+		echo -e " This will also remove the white- and blacklist you may have customized.\n"
+		echo -en " Remove all files? [1=Yes 2=No] " ;read RemoveAppFiles
+		if [ $RemoveAppFiles == "1" ];then
+		
+			rm -rf $adBlockingDevice/$installDir
+			
+			# remove script
+			echo " Removing this script now."
+			echo -e " $appName uninstall complete.\n Good bye."
+			appScriptPath=$(dirname "$(readlink -f "$0")")
+			rm -rf $appScriptPath/$appScript
+			exit 0
+		
+		else
+			# remove script
+			echo -e " \n $appName files remain on $adBlockingDevice\n"
+			echo " Removing this script now."
+			echo -e " $appName uninstall complete.\n Good bye."
+			appScriptPath=$(dirname "$(readlink -f "$0")")
+			rm -rf $appScriptPath/$appScript
+			exit 0
+		fi
+		
+	else
+		echo -e " \n$igreen How good of you... $colorNone\n"
+		sleeptime=5
+		reload_app
+	fi
+else
+	error_config
+	sleeptime=5
+	reload_app
 fi
 }
 
@@ -1401,7 +1477,7 @@ fi
 	insert_dashed_line
 	echo "  A B - S O L U T I O N   A D B L O C K I N G"
 	insert_dashed_line
-	echo -e "  $appName $appVersion               by thelonelycoder"
+	echo -e "  $appName $appVersion		 by thelonelycoder"
 	insert_dashed_line
 	if [ $prevSettings == "1" ];then
 		echo "  $routerName ($architecture) fw-$firmwareVersionAct @ $lan_ipaddr"
@@ -1415,6 +1491,7 @@ fi
 	echo -e " [h]  Change hosts file type [${hostColor}$hostsFileType${colorNone}]"
 	echo " [u]  Update hosts file manually"
 	echo -e "      ($updateDay)"
+	echo " [sh] Sort hosts file in alphabetical order"
 	echo " [p]  Process white- and blacklist files"
 
 	echo ""
@@ -1424,6 +1501,7 @@ fi
 	echo " [c]  Show config file or [il] install log"
 	echo ""
 	echo " [s]  Show AB-Solution info"
+	echo " [rm] Uninstall AB-Solution"
 	echo ""
 	echo " [e]  Exit script"
 	if [ $news == "1" ];then
@@ -1466,7 +1544,7 @@ fi
 					change_hosts_file_type
 					sh -x $installDirPath/$scriptsDir/$updateHostsFile
 					echo -e " hosts file type changed.\n"
-				elif [ $adBlockingState == off ];then
+				elif [ $adBlockingState == "off" ];then
 					echo " Adblocking Is disabled. Enable it first."
 				fi
 				sleeptime=5
@@ -1481,14 +1559,26 @@ fi
 					echo " updating amalgamated hosts file"
 					sh -x $installDirPath/$scriptsDir/$updateHostsFile
 					echo -e " hosts file updated\n"
-				elif [ $adBlockingState == off ];then
+				elif [ $adBlockingState == "off" ];then
 					echo " Adblocking Is disabled. Enable it first."
 				fi
 				sleeptime=5
 				reload_app
 						break;;
+		
+		[Ss][Hh])	# Sort the hosts file in alphabetical order
+					# politely requested by @elorimer
+				insert_dashed_line
+				cp $installDirPath/hosts-adblock $installDirPath/temp
+				echo -e " Sorting entries in hosts file\n This may take a while...\n"
+				cat $installDirPath/temp | sort -u > $installDirPath/hosts-adblock
+				rm $installDirPath/temp
+				echo " Hosts file sorted!"
+				sleeptime=5
+				reload_app
+						break;;
 
-		[Pp])	# read and process the white- and blacklist.
+		[Pp])	# read and process the white- and blacklist
 				insert_dashed_line
 				process_b_w_list
 				sleeptime=5
@@ -1529,6 +1619,11 @@ fi
 				hint_overhead
 				noclear=1
 				show_menu
+						break;;
+						
+		[Rr][Mm])	# uninstall app
+				insert_dashed_line
+				rm_ab_solution
 						break;;
 
 		11)		# hidden, script reload menu
