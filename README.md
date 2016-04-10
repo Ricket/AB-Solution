@@ -7,7 +7,9 @@ with Asuswrt-Merlin firmware installed.
 This installs a Control Center for Ad-Blocking
 and logging of DNS Queries.
 
-See the SmallNetBuilders Forum thread for more details:
+For more detailed infos visit the Website <a href="http://www.ab-solution.info">http://www.ab-solution.info</a>
+
+Discuss and read even more on the SmallNetBuilders Forum:
 <a href="http://www.snbforums.com/threads/ab-solution-1-07-is-out.31474/">AB-Solution 1.07</a>
 
 Screenshot of v1.07:
