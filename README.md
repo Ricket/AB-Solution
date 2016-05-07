@@ -9,6 +9,9 @@ and logging of DNS Queries.
 
 For more detailed infos visit the Website <a href="http://www.ab-solution.info">ab-solution.info</a>
 
+For those of you that need IPv4 and IPv6 support: I have AB-Solution 1.08-beta1 with the IPv6 addition released.
+Downloads at <a href="http://www.ab-solution.info">ab-solution.info</a>.
+
 Discuss and read even more on the SmallNetBuilders Forum:
 <a href="http://www.snbforums.com/threads/ab-solution-1-07-is-out.31474/">AB-Solution 1.07</a>
 
